@@ -96,6 +96,10 @@ if __name__ == '__main__':
     for profiles in all_profiles:
         df = pd.read_csv(profiles_path+profiles)
         user_ids = df.user_id.tolist()
+        if profiles == 'joh.csv' :
+            collected_files = [int(f[:-11]) for f in listdir('collected_tweets/joh') if isfile(join('collected_tweets/joh', f))]
+            intersection_set = set.difference(set(user_ids), set(collected_files))
+            user_ids = list(intersection_set)
 
         for user_id in user_ids:
             try:
