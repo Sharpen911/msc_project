@@ -6,7 +6,7 @@ CONSUMER_SECRET = "g9Z8DvPpSIUxdtY1xqyuvzrUfimPJ6TvQE4hXz1kTMFW7kxzAv"
 
 data_path = 'user_data/'
 
-save_dir = 'collected_tweets/'
+tweets_save_dir = 'collected_tweets/'
 
-cities = ['joh']
+
 

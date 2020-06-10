@@ -84,11 +84,15 @@ def get_all_tweets(user_id,api):
 
  
 if __name__ == '__main__':
+
+
+
     if not os.path.exists('collected_tweets'):
         os.mkdir('collected_tweets')
 
     twitter_client = TwitterClient()
     api = twitter_client.get_twitter_client_api()
+
 
     profiles_path = utils.data_path
     all_profiles = [f for f in listdir(profiles_path) if isfile(join(profiles_path, f))]
@@ -96,21 +100,24 @@ if __name__ == '__main__':
     for profiles in all_profiles:
         df = pd.read_csv(profiles_path+profiles)
         user_ids = df.user_id.tolist()
-        if profiles == 'joh.csv' :
-            collected_files = [int(f[:-11]) for f in listdir('collected_tweets/joh') if isfile(join('collected_tweets/joh', f))]
-            intersection_set = set.difference(set(user_ids), set(collected_files))
-            user_ids = list(intersection_set)
+
+        collected_files = [int(f[:-11]) for f in listdir('collected_tweets/'+profiles[:-4]) if isfile(join('collected_tweets/'+profiles[:-4], f))]
+        #the slice [:-11] is used to get the user id by using the file ending with '_tweets.csv'
+        #the slice [:-4] is used to get the city name by using the profiles such as 'joh.csv'
+        intersection_set = set.difference(set(user_ids), set(collected_files))#exclude already collected tweets
+        user_ids = list(intersection_set)
+
 
         for user_id in user_ids:
             try:
 
                 all_tweets = get_all_tweets(user_id, api)
-                save_collected_tweets(utils.save_dir + profiles[:-4], user_id,all_tweets)  # use indices to create the folder by location
+                save_collected_tweets(utils.tweets_save_dir + profiles[:-4], user_id,all_tweets)  # use indices to create the folder by location
 
             except tweepy.TweepError as ex:
                 if ex.reason == "Not authorized.":
                     print('The Tweets of user {} are protected,skipping...'.format(user_id))
 
 
-    # status = api.rate_limit_status()
+    # status = api.rate_limit_status() #uncomment to check the ratelimit
     # print(status['resources']['statuses']['/statuses/user_timeline'])
