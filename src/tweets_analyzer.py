@@ -47,15 +47,6 @@ class Emoji_Analyzer:
         num_of_users = len(self.collected_tweets)
         self.usage_per_user = pd.DataFrame(numpy.zeros(shape=(num_of_users,num_of_emojis)),columns = possible_emojis)#possible emojis and its number is defined outside
 
-        self.usage_by_male = Counter()
-        self.usage_by_female = Counter()
-        self.usage_by_asian = Counter()
-        self.usage_by_black = Counter()
-        self.usage_by_hispanic = Counter()
-        self.usage_by_white = Counter()
-        self.usage_by_other = Counter()
-        self.overall_usage = Counter()
-
         self.analysis_status = False
 
     def begin_analysis(self):
@@ -96,25 +87,9 @@ class Emoji_Analyzer:
             elif self.user_demog[user_id]['ethnicity'] == 'other':
                 self.usage_per_user.at[enum,'ethnicity'] = 5
 
-            self.overall_usage.update(count)
 
-            if self.user_demog[user_id]['gender'] == 'male':
-                self.usage_by_male.update(count)
-            elif self.user_demog[user_id]['gender'] == 'female':
-                self.usage_by_female.update(count)
 
-            if self.user_demog[user_id]['ethnicity'] == 'asian':
-                self.usage_by_asian.update(count)
-            elif self.user_demog[user_id]['ethnicity'] == 'black':
-                self.usage_by_black.update(count)
-            elif self.user_demog[user_id]['ethnicity'] == 'hispanic':
-                self.usage_by_hispanic.update(count)
-            elif self.user_demog[user_id]['ethnicity'] == 'white':
-                self.usage_by_white.update(count)
-            elif self.user_demog[user_id]['ethnicity'] == 'other':
-                self.usage_by_other.update(count)
-
-        print('Analysis completed')
+        print('Analysis of {} has been completed'.format(self.city))
         self.analysis_status = True
 
     def save_analysis_results(self,save_dir = 'analysis_results'):
@@ -122,26 +97,12 @@ class Emoji_Analyzer:
             print('Please do the analysis before generate results')
 
         else:
-            if not os.path.exists(save_dir):
-                os.mkdir(save_dir)
 
-            save_path = save_dir+'/'+'{}_results.pkl'.format(self.city)
-            results = {'overall':self.overall_usage,
-                       'gender':{'male':self.usage_by_male ,'female':self.usage_by_female},
-                       'ethnicity':{'asian':self.usage_by_asian,'black':self.usage_by_black,
-                       'hispanic':self.usage_by_hispanic,'white':self.usage_by_white,
-                       'other':self.usage_by_other}}
-
-
-            with open(save_path, 'wb') as file:
-                pickle.dump(results, file)
 
             per_user_path = 'usage_per_user/'+self.city+'_df.pkl'
             self.usage_per_user.to_pickle(per_user_path)
 
-
-            print('Save the result of {} to {}'.format(self.city,save_path))
-            print('Save the usage of the user in {} to {}'.format(self.city, per_user_path))
+            print('Save the usage by each user in {} to {}'.format(self.city, per_user_path))
 
 
 
@@ -153,66 +114,24 @@ with open('possible_emoji.pkl', 'rb') as f:
     possible_emojis = sorted(possible_emojis)
 
 
-cities = ['joh','lon','nyc','ran']
+# cities = ['joh','lon','nyc','ran']
+#
+# for city in cities:
+#     analyzer = Emoji_Analyzer(city)
+#     analyzer.begin_analysis()
+#     analyzer.save_analysis_results()
+#
 
-for city in cities:
-    analyzer = Emoji_Analyzer(city)
-    analyzer.begin_analysis()
-    analyzer.save_analysis_results()
 
+
+#
 # df = a.usage_per_user
 # df.loc['Total'] = df.sum()
-
-
-
 # df.drop(['total_tweets', 'tweets_contain_emoji','gender','ethnicity'], axis=1,inplace=True)
 # test = df.sort_values(by = 'Total',axis=1, ascending=False)#sort the columns by the column sum
+# print(test)
 #
 # print(test.drop([i for i in range(95)], axis=0))
 # print(df[df.gender.eq(0)])#filter the column where the gender is female
-# print(a.usage_by_female)
 
 
-
-
-# import time
-# start_time = time.time()
-#
-#
-# print("--- %s mini-seconds ---" % (time.time() - start_time))
-
-
-# extract = Extractor()
-# for city in utils.cities:
-#     df = pd.read_csv(utils.data_path+city+'.csv', index_col='user_id', usecols=['user_id', 'gender', 'ethnicity'])#'data/' + [city name]
-#     user_demog = df.to_dict('index')  # hashmap that map user_id to their demographic information
-#
-#
-#
-#     users_csv_files = listdir(utils.save_dir+city)
-#     for user_csv in users_csv_files:
-#
-#
-#
-#         user_file = pd.read_csv(utils.save_dir+city+'/'+user_csv)
-#         user_tweets_list = user_file.text.tolist()
-#         count = extract.count_all_emoji(user_tweets_list)
-#         print((count.most_common()))
-#
-#         user_id = user_csv[:-11]  # ignore the ending '_tweets.csv' to get the user id
-
-
-        # with open(city+'_'+'analysis.csv','a+', newline='') as csvfile:
-        #     fieldname = ['user_id','ethnicity','gender']
-        #     writer = csv.DictWriter(csvfile,fieldnames=fieldname)
-        #     writer.writerow({'user_id':user_id,'ethnicity':user_demog[int(user_id)]['ethnicity'],'gender':user_demog[int(user_id)]['gender']})
-
-
-# context1 = Counter()
-#
-# dict1 = {'😉': 2, '⭐': 1, '🎖': 1, '😭': 3}
-# dict2 = {'😉': 5, '⭐': 3, '🎖': 1}
-#
-# context1.update(dict1)
-# context1.update(dict2)
-# print(context1)
