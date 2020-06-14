@@ -22,11 +22,13 @@ class edited_extractor(Extractor):
 
         try:
             for string in iterable:
-                if self.detect_emoji(string):
-                    tweets_contain_emoji+=1
-                running_total.update(self.count_emoji(string, check_first=check_first))
+                if isinstance(string, str):
+                    if self.detect_emoji(string):
+                        tweets_contain_emoji += 1
 
-            return running_total,tweets_contain_emoji
+                    running_total.update(self.count_emoji(string, check_first=check_first))
+
+            return running_total, tweets_contain_emoji
         except:
             raise TypeError('This method requires an iterable of strings.')
 
@@ -89,7 +91,7 @@ class Emoji_Analyzer:
                 elif self.user_demog[labeled_user]['ethnicity'] == 'other':
                     self.usage_per_user.at[enum,'ethnicity'] = 5
             except:
-                print('Have not collect the labeled user {},skiping...'.format(labeled_user))
+                continue
 
 
 
