@@ -39,12 +39,13 @@ class Emoji_Analyzer:
         self.city = city
         self.target_dir = tweets_path+city
 
-        df = pd.read_csv(user_inf_path+city+'.csv', index_col='user_id', usecols=['user_id', 'gender', 'ethnicity'])#read the file that store the user information
-        self.user_demog = df.to_dict('index')  # a hashmap that maps user_id to their demographic information
 
-        self.collected_tweets = listdir(self.target_dir)
+        user_information  = pd.read_csv(user_inf_path+city+'.csv',index_col='user_id',usecols=['user_id', 'gender', 'ethnicity'])#read the file that store the user information
+        self.user_demog = user_information.dropna().to_dict('index')  # a hashmap that maps user_id to their demographic information
+        self.labeled_users = list(self.user_demog.keys())
 
-        num_of_users = len(self.collected_tweets)
+        num_of_users = len(self.labeled_users)
+
         self.usage_per_user = pd.DataFrame(numpy.zeros(shape=(num_of_users,num_of_emojis)),columns = possible_emojis)#possible emojis and its number is defined outside
 
         self.analysis_status = False
@@ -55,37 +56,40 @@ class Emoji_Analyzer:
 
         extractor = edited_extractor()
 
-        for enum,user_csv in enumerate(tqdm(self.collected_tweets)):
+        for enum,labeled_user in enumerate(tqdm(self.labeled_users)):
 
-            user_id = int(user_csv[:-11])#get the user id by using the name of a csv file
+            try:
 
-            user_file = pd.read_csv(self.target_dir+'/'+user_csv)
-            user_tweets_list = user_file.text.tolist()
+                user_csv = str(labeled_user)+'_tweets.csv'
+                user_file = pd.read_csv(self.target_dir+'/'+user_csv)
+                user_tweets_list = user_file.text.tolist()
 
-            count,tweets_contain_emoji= extractor.count_all_emoji(user_tweets_list)
+                count,tweets_contain_emoji= extractor.count_all_emoji(user_tweets_list)
 
-            for emoji in count:
-                self.usage_per_user.at[enum, emoji] = count[emoji]
+                for emoji in count:
+                    self.usage_per_user.at[enum, emoji] = count[emoji]
 
-            self.usage_per_user.at[enum,'tweets_contain_emoji'] = tweets_contain_emoji
-            self.usage_per_user.at[enum,'total_tweets'] = len(user_tweets_list)
+                self.usage_per_user.at[enum,'tweets_contain_emoji'] = tweets_contain_emoji
+                self.usage_per_user.at[enum,'total_tweets'] = len(user_tweets_list)
 
 
-            if self.user_demog[user_id]['gender'] == 'male':
-                self.usage_per_user.at[enum,'gender'] = 1
-            elif self.user_demog[user_id]['gender'] == 'female':
-                self.usage_per_user.at[enum,'gender'] = 0
+                if self.user_demog[labeled_user]['gender'] == 'male':
+                    self.usage_per_user.at[enum,'gender'] = 1
+                elif self.user_demog[labeled_user]['gender'] == 'female':
+                    self.usage_per_user.at[enum,'gender'] = 0
 
-            if self.user_demog[user_id]['ethnicity'] == 'asian':
-                self.usage_per_user.at[enum,'ethnicity'] = 1
-            elif self.user_demog[user_id]['ethnicity'] == 'black':
-                self.usage_per_user.at[enum,'ethnicity'] = 2
-            elif self.user_demog[user_id]['ethnicity'] == 'hispanic':
-                self.usage_per_user.at[enum,'ethnicity'] = 3
-            elif self.user_demog[user_id]['ethnicity'] == 'white':
-                self.usage_per_user.at[enum,'ethnicity'] = 4
-            elif self.user_demog[user_id]['ethnicity'] == 'other':
-                self.usage_per_user.at[enum,'ethnicity'] = 5
+                if self.user_demog[labeled_user]['ethnicity'] == 'asian':
+                    self.usage_per_user.at[enum,'ethnicity'] = 1
+                elif self.user_demog[labeled_user]['ethnicity'] == 'black':
+                    self.usage_per_user.at[enum,'ethnicity'] = 2
+                elif self.user_demog[labeled_user]['ethnicity'] == 'hispanic':
+                    self.usage_per_user.at[enum,'ethnicity'] = 3
+                elif self.user_demog[labeled_user]['ethnicity'] == 'white':
+                    self.usage_per_user.at[enum,'ethnicity'] = 4
+                elif self.user_demog[labeled_user]['ethnicity'] == 'other':
+                    self.usage_per_user.at[enum,'ethnicity'] = 5
+            except:
+                print('Have not collect the labeled user {},skiping...'.format(labeled_user))
 
 
 
@@ -97,7 +101,6 @@ class Emoji_Analyzer:
             print('Please do the analysis before generate results')
 
         else:
-
 
             per_user_path = 'usage_per_user/'+self.city+'_df.pkl'
             self.usage_per_user.to_pickle(per_user_path)
@@ -114,24 +117,19 @@ with open('possible_emoji.pkl', 'rb') as f:
     possible_emojis = sorted(possible_emojis)
 
 
-# cities = ['joh','lon','nyc','ran']
-#
-# for city in cities:
-#     analyzer = Emoji_Analyzer(city)
-#     analyzer.begin_analysis()
-#     analyzer.save_analysis_results()
-#
+
+# a = Emoji_Analyzer('joh')
+# a.begin_analysis()
+# a.save_analysis_results()
+
+cities = ['joh','lon','nyc','ran']
+
+for city in cities:
+    analyzer = Emoji_Analyzer(city)
+    analyzer.begin_analysis()
+    analyzer.save_analysis_results()
 
 
 
-#
-# df = a.usage_per_user
-# df.loc['Total'] = df.sum()
-# df.drop(['total_tweets', 'tweets_contain_emoji','gender','ethnicity'], axis=1,inplace=True)
-# test = df.sort_values(by = 'Total',axis=1, ascending=False)#sort the columns by the column sum
-# print(test)
-#
-# print(test.drop([i for i in range(95)], axis=0))
-# print(df[df.gender.eq(0)])#filter the column where the gender is female
 
 
