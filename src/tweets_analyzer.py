@@ -74,6 +74,8 @@ class Emoji_Analyzer:
                 self.usage_per_user.at[enum,'tweets_contain_emoji'] = tweets_contain_emoji
                 self.usage_per_user.at[enum,'total_tweets'] = len(user_tweets_list)
 
+                self.usage_per_user.at[enum, 'user_id'] = labeled_user
+
 
                 if self.user_demog[labeled_user]['gender'] == 'male':
                     self.usage_per_user.at[enum,'gender'] = 1
