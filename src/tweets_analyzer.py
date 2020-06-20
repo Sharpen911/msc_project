@@ -60,7 +60,7 @@ class Emoji_Analyzer:
 
         for enum,labeled_user in enumerate(tqdm(self.labeled_users)):
 
-            try:
+           try:
 
                 user_csv = str(labeled_user)+'_tweets.csv'
                 user_file = pd.read_csv(self.target_dir+'/'+user_csv)
@@ -90,8 +90,8 @@ class Emoji_Analyzer:
                     self.usage_per_user.at[enum,'ethnicity'] = 4
                 elif self.user_demog[labeled_user]['ethnicity'] == 'other':
                     self.usage_per_user.at[enum,'ethnicity'] = 5
-            except:
-                continue
+           except:
+               continue
 
 
 
