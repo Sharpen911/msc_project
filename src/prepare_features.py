@@ -7,10 +7,9 @@ import gensim.models as gs
 import nltk.tokenize as tk
 import phrase2vec as p2v
 from tqdm import tqdm
-from emoji_extractor.extract import Extractor
-emoji_detector = Extractor()
 
-def prepare_feature_vector(tweets, p2v,emoji_only = False):
+
+def prepare_feature_vector(tweets, p2v):
     """
     Args:
         tweets: All tweets of a user
@@ -25,10 +24,11 @@ def prepare_feature_vector(tweets, p2v,emoji_only = False):
         return user_features
     tokenizer = tk.TweetTokenizer(preserve_case=False, reduce_len=True, strip_handles=True)
     for tweet in tweets:
-        if emoji_only is True and emoji_detector.detect_emoji(tweet):
-            continue
         tokens = tokenizer.tokenize(tweet)
-        user_features += np.sum([p2v[x] for x in tokens], axis=0) / len(tokens)
+        if len(tokens) ==0:
+            user_features+=0
+        else:
+            user_features += np.sum([p2v[x] for x in tokens], axis=0) / len(tokens)
 
     user_features = user_features / len(tweets)
     return user_features
@@ -37,7 +37,7 @@ def prepare_feature_vector(tweets, p2v,emoji_only = False):
 w2v_path='./pre-trained/GoogleNews-vectors-negative300.bin'
 e2v_path = './pre-trained/emoji2vec.bin'
 
-w2v = gs.KeyedVectors.load_word2vec_format(w2v_path, binary=True)
+# w2v = gs.KeyedVectors.load_word2vec_format(w2v_path, binary=True)
 e2v = gs.KeyedVectors.load_word2vec_format(e2v_path, binary=True)
 
 
@@ -46,7 +46,8 @@ cities = ['joh', 'lon', 'nyc', 'ran']
 
 user_features = pd.DataFrame()
 
-types = ['text', 'emoji', 'both']
+# types = ['text', 'emoji', 'both']
+types = ['emoji']
 
 for feature_type in types:
     user_features_all = pd.DataFrame()
@@ -72,10 +73,7 @@ for feature_type in types:
                 file_path = 'collected_tweets/' + city + '/' + str(user_id) + '_tweets.csv'
                 user_tweets = pd.read_csv(file_path, usecols=['text'])
 
-                if feature_type == 'emoji':
-                    feature = prepare_feature_vector(user_tweets.text, model, emoji_only = True)
-                else:
-                    feature = prepare_feature_vector(user_tweets.text, model)
+                feature = prepare_feature_vector(user_tweets.text, model)
 
                 series = pd.Series(feature)
                 user_features.at[enum] = series
