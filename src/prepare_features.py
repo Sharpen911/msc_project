@@ -42,7 +42,7 @@ user_features = pd.DataFrame()
 
 # types = ['text', 'emoji', 'both']
 types = ['emoji']
-for feature_type in tqdm(types):
+for feature_type in types:
     if feature_type == 'text':
         model = p2v.Phrase2Vec(300, w2v, e2v=None)
     elif feature_type == 'emoji':
@@ -50,16 +50,17 @@ for feature_type in tqdm(types):
     else:
         model = p2v.Phrase2Vec(300, w2v, e2v=e2v)
 
-    for city in cities:
+    for city in tqdm(cities):
 
-        with open(parent_df_path + city +'_df.pkl', 'rb') as f:
+        with open(parent_df_path + city + '_df.pkl', 'rb') as f:
             per_usage = pickle.load(f)
             per_usage.dropna(inplace=True)
             per_usage.drop(labels=per_usage[per_usage.total_tweets.eq(0)].index, inplace=True)
             per_usage.drop(labels=per_usage[per_usage.ethnicity.eq(5)].index, inplace=True)
 
-        for user_id in per_usage.user_id:
-            file_path = 'collected_tweets/' + city + '/' + str(int(user_id))+'_tweets.csv'
+        user_ids = per_usage.user_id.astype('int64')
+        for user_id in user_ids:
+            file_path = 'collected_tweets/' + city + '/' + str(user_id) + '_tweets.csv'
             user_tweets = pd.read_csv(file_path, usecols=['text'])
 
             feature = prepare_feature_vector(user_tweets.text, model)
