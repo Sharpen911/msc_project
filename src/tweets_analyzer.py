@@ -5,6 +5,10 @@ import pickle
 import utils
 from emoji_extractor.extract import Extractor
 
+import gensim.models as gs
+import nltk.tokenize as tk
+import phrase2vec as p2v
+
 
 import os
 from os import listdir
@@ -74,7 +78,7 @@ class Emoji_Analyzer:
                 self.usage_per_user.at[enum,'tweets_contain_emoji'] = tweets_contain_emoji
                 self.usage_per_user.at[enum,'total_tweets'] = len(user_tweets_list)
 
-                self.usage_per_user.at[enum, 'user_id'] = labeled_user
+                self.usage_per_user.at[enum, 'user_id'] = int(labeled_user)
 
 
                 if self.user_demog[labeled_user]['gender'] == 'male':
@@ -120,11 +124,6 @@ with open('possible_emoji.pkl', 'rb') as f:
     num_of_emojis = len(possible_emojis)
     possible_emojis = sorted(possible_emojis)
 
-
-
-# a = Emoji_Analyzer('joh')
-# a.begin_analysis()
-# a.save_analysis_results()
 
 cities = ['joh', 'lon', 'nyc', 'ran']
 

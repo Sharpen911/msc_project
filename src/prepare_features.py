@@ -1,14 +1,16 @@
 import pandas as pd
 import numpy as np
 import math
-import gensim.models as gs
-import pickle as pk
 import pickle
+
+import gensim.models as gs
 import nltk.tokenize as tk
 import phrase2vec as p2v
 from tqdm import tqdm
+from emoji_extractor.extract import Extractor
+emoji_detector = Extractor()
 
-def prepare_feature_vector(tweets, p2v):
+def prepare_feature_vector(tweets, p2v,emoji_only = False):
     """
     Args:
         tweets: All tweets of a user
@@ -19,8 +21,12 @@ def prepare_feature_vector(tweets, p2v):
 
     """
     user_features = np.zeros(300)
+    if len(tweets) == 0:
+        return user_features
     tokenizer = tk.TweetTokenizer(preserve_case=False, reduce_len=True, strip_handles=True)
     for tweet in tweets:
+        if emoji_only is True and emoji_detector.detect_emoji(tweet):
+            continue
         tokens = tokenizer.tokenize(tweet)
         user_features += np.sum([p2v[x] for x in tokens], axis=0) / len(tokens)
 
@@ -28,10 +34,10 @@ def prepare_feature_vector(tweets, p2v):
     return user_features
 
 
-# w2v_path='./pre-trained/GoogleNews-vectors-negative300.bin'
+w2v_path='./pre-trained/GoogleNews-vectors-negative300.bin'
 e2v_path = './pre-trained/emoji2vec.bin'
 
-# w2v = gs.KeyedVectors.load_word2vec_format(w2v_path, binary=True)
+w2v = gs.KeyedVectors.load_word2vec_format(w2v_path, binary=True)
 e2v = gs.KeyedVectors.load_word2vec_format(e2v_path, binary=True)
 
 
@@ -40,9 +46,11 @@ cities = ['joh', 'lon', 'nyc', 'ran']
 
 user_features = pd.DataFrame()
 
-# types = ['text', 'emoji', 'both']
-types = ['emoji']
+types = ['text', 'emoji', 'both']
+
 for feature_type in types:
+    user_features_all = pd.DataFrame()
+
     if feature_type == 'text':
         model = p2v.Phrase2Vec(300, w2v, e2v=None)
     elif feature_type == 'emoji':
@@ -50,26 +58,38 @@ for feature_type in types:
     else:
         model = p2v.Phrase2Vec(300, w2v, e2v=e2v)
 
-    for city in tqdm(cities):
+    for city in cities:
 
-        with open(parent_df_path + city + '_df.pkl', 'rb') as f:
-            per_usage = pickle.load(f)
-            per_usage.dropna(inplace=True)
-            per_usage.drop(labels=per_usage[per_usage.total_tweets.eq(0)].index, inplace=True)
-            per_usage.drop(labels=per_usage[per_usage.ethnicity.eq(5)].index, inplace=True)
+        user_information = pd.read_csv('user_data/' + city + '.csv', index_col='user_id',usecols=['user_id', 'gender', 'ethnicity'])
+        user_demog = user_information.dropna().to_dict('index')
+        labeled_users = list(user_demog.keys())
+        num_of_users = len(labeled_users)
 
-        user_ids = per_usage.user_id.astype('int64')
-        for user_id in user_ids:
-            file_path = 'collected_tweets/' + city + '/' + str(user_id) + '_tweets.csv'
-            user_tweets = pd.read_csv(file_path, usecols=['text'])
+        user_features = pd.DataFrame(np.zeros(shape=(num_of_users, 300)), columns=range(300))
 
-            feature = prepare_feature_vector(user_tweets.text, model)
+        for enum, user_id in enumerate(tqdm(labeled_users)):
+            try:
+                file_path = 'collected_tweets/' + city + '/' + str(user_id) + '_tweets.csv'
+                user_tweets = pd.read_csv(file_path, usecols=['text'])
 
-            series = pd.Series(feature)
-            user_features = user_features.append(series, ignore_index=True)
-            user_features['user_id'] = user_id
+                if feature_type == 'emoji':
+                    feature = prepare_feature_vector(user_tweets.text, model, emoji_only = True)
+                else:
+                    feature = prepare_feature_vector(user_tweets.text, model)
+
+                series = pd.Series(feature)
+                user_features.at[enum] = series
+
+                user_features.at[enum,'gender'] = user_demog[user_id]['gender']
+                user_features.at[enum, 'ethnicity'] = user_demog[user_id]['ethnicity']
+
+            except:
+                continue
+        user_features_all = user_features_all.append(user_features)
+
     save_path = 'features/' + feature_type + '_.pkl'
-    user_features.to_pickle(save_path)
+    user_features_all.to_pickle(save_path)
+    print('Save the {} features into: {}'.format(feature_type, save_path))
 
 
 
