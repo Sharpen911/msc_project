@@ -126,7 +126,7 @@ with open('possible_emoji.pkl', 'rb') as f:
 # a.begin_analysis()
 # a.save_analysis_results()
 
-cities = ['joh','lon','nyc','ran']
+cities = ['joh', 'lon', 'nyc', 'ran']
 
 for city in cities:
     analyzer = Emoji_Analyzer(city)
