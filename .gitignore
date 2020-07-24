@@ -1,4 +1,5 @@
 src/collected_tweets
+src/collected_tweets_sample
 src/.idea
 src/__pycache__
 src/analysis_results
