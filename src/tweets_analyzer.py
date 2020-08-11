@@ -46,9 +46,12 @@ class Emoji_Analyzer:
         self.target_dir = tweets_path+city
 
 
-        user_information  = pd.read_csv(user_inf_path+city+'.csv',index_col='user_id',usecols=['user_id', 'gender', 'ethnicity'])#read the file that store the user information
+        user_information = pd.read_csv(user_inf_path+city+'.csv',index_col='user_id',usecols=['user_id', 'gender', 'ethnicity'])#read the file that store the user information
         self.user_demog = user_information.dropna().to_dict('index')  # a hashmap that maps user_id to their demographic information
-        self.labeled_users = list(self.user_demog.keys())
+        labeled = self.user_demog.keys()
+        collected = [int(name[:-11]) for name in listdir(utils.tweets_save_dir + city)]
+
+        self.labeled_users = set.intersection(set(labeled), set(collected))
 
         num_of_users = len(self.labeled_users)
 
@@ -62,42 +65,38 @@ class Emoji_Analyzer:
 
         extractor = edited_extractor()
 
-        for enum,labeled_user in enumerate(tqdm(self.labeled_users)):
+        for enum, labeled_user in enumerate(tqdm(self.labeled_users)):
 
-           try:
+            try:
 
                 user_csv = str(labeled_user)+'_tweets.csv'
-                user_file = pd.read_csv(self.target_dir+'/'+user_csv)
+                user_file = pd.read_csv(self.target_dir+'/'+user_csv, lineterminator='\n',usecols= ['text'])
                 user_tweets_list = user_file.text.tolist()
 
-                count,tweets_contain_emoji= extractor.count_all_emoji(user_tweets_list)
+                count, tweets_contain_emoji= extractor.count_all_emoji(user_tweets_list)
 
                 for emoji in count:
                     self.usage_per_user.at[enum, emoji] = count[emoji]
 
-                self.usage_per_user.at[enum,'tweets_contain_emoji'] = tweets_contain_emoji
-                self.usage_per_user.at[enum,'total_tweets'] = len(user_tweets_list)
+                self.usage_per_user.at[enum, 'tweets_contain_emoji'] = tweets_contain_emoji
+                self.usage_per_user.at[enum, 'total_tweets'] = len(user_tweets_list)
 
-                self.usage_per_user.at[enum, 'user_id'] = int(labeled_user)
+                # self.usage_per_user.at[enum, 'user_id'] = int(labeled_user)
 
 
-                if self.user_demog[labeled_user]['gender'] == 'male':
-                    self.usage_per_user.at[enum,'gender'] = 1
-                elif self.user_demog[labeled_user]['gender'] == 'female':
-                    self.usage_per_user.at[enum,'gender'] = 0
 
-                if self.user_demog[labeled_user]['ethnicity'] == 'asian':
-                    self.usage_per_user.at[enum,'ethnicity'] = 1
-                elif self.user_demog[labeled_user]['ethnicity'] == 'black':
-                    self.usage_per_user.at[enum,'ethnicity'] = 2
-                elif self.user_demog[labeled_user]['ethnicity'] == 'hispanic':
-                    self.usage_per_user.at[enum,'ethnicity'] = 3
-                elif self.user_demog[labeled_user]['ethnicity'] == 'white':
-                    self.usage_per_user.at[enum,'ethnicity'] = 4
-                elif self.user_demog[labeled_user]['ethnicity'] == 'other':
-                    self.usage_per_user.at[enum,'ethnicity'] = 5
-           except:
-               continue
+                self.usage_per_user.at[enum,'gender'] = self.user_demog[labeled_user]['gender']
+
+
+
+                self.usage_per_user.at[enum,'ethnicity'] = self.user_demog[labeled_user]['ethnicity']
+
+
+
+            except Exception as e:
+                print(e)
+
+
 
 
 

@@ -1,5 +1,5 @@
-src/collected_tweets
 src/collected_tweets_sample
+src/collected_tweets
 src/.idea
 src/__pycache__
 src/analysis_results
