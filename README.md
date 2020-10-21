@@ -36,6 +36,8 @@ by using mutual information/Chi-square test.
 
 prediction-BOE: predict gender and ethnicity by using bag of emojis feature(BOE).
 
+confusion matrix: make the confusion matrix.
+
 cross_validate: use cross validation to find hyper-parameters for different models.
 
 The .ipynb file starting with 'embedding': predict gender and ethnicity by using features based on some embedding methods.
